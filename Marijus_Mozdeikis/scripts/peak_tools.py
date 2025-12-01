@@ -66,23 +66,29 @@ def order_peaks_by_wavelength(depths):
         d["order"] = i  # m=1,2,3...
     return sorted_depths
 
-# peak_tools.py (or analysis_tools.py)
-def analyze_signal(wavelengths, signal, prominence=4, distance=10):
+def analyze_signal(wavelengths, signal, column_name="", prominence=4, distance=10):
     """
     Compute peaks, depths, FWHM, Q, MQ, and assign resonance order.
     Returns a list of dictionaries ready for export.
     """
+    # Detect polarization from column name
+    polarization = None
+    if " P " in column_name:
+        polarization = "P"
+    elif " S " in column_name:
+        polarization = "S"
+    
     peaks, props = detect_peaks(signal, prominence, distance)
     depths = calculate_depths(signal, peaks, props)
-    depths = order_peaks_by_wavelength(depths)
+    depths = order_peaks_by_wavelength(depths, polarization)
     fwhms = calculate_fwhm(signal, wavelengths, peaks, props["left_bases"])
     q_factors = calculate_q_factors(wavelengths, depths, fwhms)
-
+    
     results = []
     for d, f, q in zip(depths, fwhms, q_factors):
         results.append({
-            "resonance_order": d["order"],
-            "peak_index": d["peak_index"],
+            "resonance_order": d["order"],  # m=-1, +1, +2... or m=1,2,3...
+            # REMOVE THIS LINE: "peak_index": d["peak_index"],
             "peak_wl": float(wavelengths[d["peak_index"]]),
             "depth": abs(float(d["depth"])),
             "fwhm": float(f["fwhm"]),
@@ -91,3 +97,68 @@ def analyze_signal(wavelengths, signal, prominence=4, distance=10):
         })
     return results
 
+def order_peaks_by_wavelength(depths, polarization=None):
+    """
+    Assign order to peaks based on increasing wavelength and polarization.
+    P polarization: m = -1, +1, +2, +3...
+    S polarization: m = 1, 2, 3...
+    
+    Args:
+        depths: List of depth dictionaries
+        polarization: 'P' or 'S' (from column name)
+    
+    Returns:
+        Sorted depths with 'order' key added
+    """
+    # Sort by wavelength (increasing peak_index)
+    sorted_depths = sorted(depths, key=lambda d: d["peak_index"])
+    
+    # Assign order based on polarization
+    if polarization and polarization.upper() == 'P':
+        # P polarization: m = -1, +1, +2, +3...
+        for i, d in enumerate(sorted_depths):
+            if i == 0:
+                d["order"] = -1  # First resonance is m=-1
+            else:
+                d["order"] = i   # m=+1, +2, +3... (i starts at 1 for 2nd peak)
+    else:
+        # S polarization or unknown: m = 1, 2, 3...
+        for i, d in enumerate(sorted_depths, start=1):
+            d["order"] = i
+    
+    return sorted_depths
+
+def analyze_signal_with_custom_baseline(wavelengths, signal, column_name="", prominence=4, distance=10, custom_left_bases=None):
+    """
+    Same as analyze_signal but with manually adjusted baselines.
+    custom_left_bases: list of baseline indices (one per peak)
+    """
+    # Detect polarization from column name
+    polarization = None
+    if " P " in column_name:
+        polarization = "P"
+    elif " S " in column_name:
+        polarization = "S"
+    
+    peaks, props = detect_peaks(signal, prominence, distance)
+    
+    # Use custom baselines if provided
+    if custom_left_bases is not None and len(custom_left_bases) == len(peaks):
+        props["left_bases"] = np.array(custom_left_bases)
+    
+    depths = calculate_depths(signal, peaks, props)
+    depths = order_peaks_by_wavelength(depths, polarization)
+    fwhms = calculate_fwhm(signal, wavelengths, peaks, props["left_bases"])
+    q_factors = calculate_q_factors(wavelengths, depths, fwhms)
+    
+    results = []
+    for d, f, q in zip(depths, fwhms, q_factors):
+        results.append({
+            "resonance_order": d["order"],
+            "peak_wl": float(wavelengths[d["peak_index"]]),
+            "depth": abs(float(d["depth"])),
+            "fwhm": float(f["fwhm"]),
+            "Q": float(q["Q"]),
+            "MQ": float(q["MQ"])
+        })
+    return results
