@@ -38,7 +38,7 @@ def plot_with_sliders_and_baseline(wavelengths, signal, init_prom=4, init_dist=1
     # --- Sliders ---
     ax_prom = plt.axes([0.25, 0.10, 0.65, 0.03])
     ax_dist = plt.axes([0.25, 0.15, 0.65, 0.03])
-    slider_prom = Slider(ax_prom, "Prominence", 0, 10, valinit=init_prom, valstep=0.5)
+    slider_prom = Slider(ax_prom, "Prominence", 0, 30, valinit=init_prom, valstep=0.5)
     slider_dist = Slider(ax_dist, "Min Distance", 0, 50, valinit=init_dist, valstep=2)
     
     # --- Click handling ---

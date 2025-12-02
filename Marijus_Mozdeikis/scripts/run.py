@@ -6,13 +6,13 @@ import os
 
 # ---------------- CONFIGURATION ----------------
 folder = r"C:\Users\Marijus\OneDrive - Vilnius University\3 semestras\cern\Marijus\Marijus_Mozdeikis\20250722_05nJ_06-10um_Spectras"
-filename = "20250722_05nJ_08um.xlsx"
+filename = "20250722_05nJ_09um.xlsx"
 column_suffixes = [" P ", " S "]
 initial_prominence = 10
 initial_distance = 10
 output_file = r"C:\Users\Marijus\OneDrive - Vilnius University\3 semestras\cern\Marijus\Marijus_Mozdeikis\results\resonance_properties.xlsx"
 # ------------------------------------------------
-start_row = 2
+start_row = 16  # Excel row to start inserting results
 print(f"📊 Processing: {filename}")
 print(f"📁 Output: {output_file}")
 print(f"📍 Will insert at row {start_row} (Excel row {start_row})")
